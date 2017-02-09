@@ -82,7 +82,7 @@ module Reins
 
     #
     def read_keyhosts
-      @addrs.each.map { |addr| {addr[1] => addr[0]}}
+      @addrs.each.map { |addr| {addr[0] => addr[1]}}
     end
 
     # 登録済みのアドレスを、他のアドレスへ変更する

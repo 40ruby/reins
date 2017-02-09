@@ -16,12 +16,13 @@ RSpec.describe Reins do
 
   describe "Auth" do
     describe "#authenticate" do
+      let(:sha512) { "106a6484291b9778c224731501d2deeb71f2b83558a0e9784fe33646f56182f69de448e92fe83fd4e57d629987f9d0dd79bf1cbca4e83b996e272ba44faa6adb" }
       let(:normal) { Reins::Auth.new }
-      let(:other)  { Reins::Auth.new('6996e0d11d644910e921ecc240f3cea8') }
+      let(:other)  { Reins::Auth.new(sha512) }
 
       context "正常に認証された場合" do
         it { expect(normal.authenticate('DEMO', '192.168.0.10')).not_to eq(false) }
-        it { expect(other.authenticate('40ruby', '192.168.0.10')).to eq('067745a1ca5c03b681e5935bb2f87ab7') }
+        it { expect(other.authenticate('40ruby', '192.168.0.10')).not_to eq(false) }
       end
 
       context "異なる認証キーで呼び出された場合" do
@@ -93,10 +94,14 @@ RSpec.describe Reins do
     end
 
     describe '#read_keyhosts' do
-      subject { hosts.read_keyhosts }
+      it '登録しなければ、空の配列' do
+        expect(hosts.addrs).to eq([])
+        expect(hosts.read_keyhosts).to eq([])
+        expect(hosts.read_keyhosts.size).to eq(0)
+      end
       it 'ハッシュ化された接続キーの一覧' do
         correct_hosts.each   { |host| hosts.create(host, auth.authenticate('DEMO', host)) }
-        is_expected.to match_array(correct_keyaddr)
+        expect(hosts.read_keyhosts.size).to eq(3)
       end
     end
 
