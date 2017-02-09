@@ -40,10 +40,8 @@ module Reins
     # 識別された場合:: 登録されているIPアドレス
     # 否認された場合:: []
     def varid(keycode)
-      Reins::clients.read_keyhosts.each do |host|
-        host.each do |addr, key|
-          return addr if key == keycode
-        end
+      Reins::clients.read_keyhosts.each do |addr, key|
+        return addr if key == keycode
       end
     end
   end

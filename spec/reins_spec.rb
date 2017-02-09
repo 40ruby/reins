@@ -43,7 +43,7 @@ RSpec.describe Reins do
       end
       context "未登録コードの場合" do
         it "空の配列が返る" do
-          expect(auth.varid(key)).to eq([])
+          expect(auth.varid(key)).to eq({})
         end
       end
     end
@@ -54,7 +54,6 @@ RSpec.describe Reins do
     let(:auth)            { Reins::Auth.new }
     let(:localhost)       { '127.0.0.1' }
     let(:correct_hosts)   { ['192.168.0.10','1.0.0.1','239.255.255.254'] }
-    let(:correct_keyaddr) { [{"651dca3bac770bbaf7a77a9ef07aaf13"=>"192.168.0.10"}, {"07bec26cc01b80212c915a68e196bf07"=>"1.0.0.1"}, {"5d49a582d7f96dbda44c6d16dfd23c3c"=>"239.255.255.254"}] }
     let(:incorrect_hosts) { ['100','[100,100]','1:0:0:1','1/0/0/1','0.0.0.1','1.0.0.0','0.0.0.0','240.0.0.1','240.255.255.254','0.256.0.1','0.0.256.1','239.255.255.255','-1.0.0.0','0.-1.0.0','0.0.-1.0','0.0.0.-1'] }
 
     before do
@@ -94,9 +93,9 @@ RSpec.describe Reins do
     end
 
     describe '#read_keyhosts' do
-      it '登録しなければ、空の配列' do
+      it '登録しなければ、空' do
         expect(hosts.addrs).to eq([])
-        expect(hosts.read_keyhosts).to eq([])
+        expect(hosts.read_keyhosts).to eq({})
         expect(hosts.read_keyhosts.size).to eq(0)
       end
       it 'ハッシュ化された接続キーの一覧' do

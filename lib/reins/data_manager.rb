@@ -65,12 +65,11 @@ module Reins
           return true
         else
           Reins::logger.error("#{addr} は既に登録されています.")
-          return false
         end
       else
         Reins::logger.error("#{addr} は登録可能なIPアドレスではありません.")
-        return false
       end
+      false
     end
 
     # 登録済みホスト一覧を配列で返す
@@ -80,9 +79,11 @@ module Reins
       @addrs.each.map { |addr| addr[0] }
     end
 
-    #
+    # 登録済みホスト一覧を、IPアドレスをKey、接続KeyをValueとするハッシュで返す
+    # == 返り値
+    # hash: hash[ipアドレス] = key を一つの要素とする
     def read_keyhosts
-      @addrs.each.map { |addr| {addr[0] => addr[1]}}
+      @addrs.each.map { |addr, key| [addr, key] }.to_h
     end
 
     # 登録済みのアドレスを、他のアドレスへ変更する
