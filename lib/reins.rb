@@ -1,7 +1,7 @@
 require "reins/version"
-require "reins/authenticator"
-require "reins/data_manager"
-require "reins/configure"
+require "reins/auth_service"
+require "reins/host_registry"
+require "reins/config"
 
 module Reins
   def start

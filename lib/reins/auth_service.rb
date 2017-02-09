@@ -3,14 +3,15 @@
 require "digest/sha2"
 
 module Reins
-  class Auth
+  class AuthService
     # サーバの認証キーを定義する
     # == パラメータ
-    # auth_code:: SHA512 でハッシュ化されたキーを指定する
+    # secret_key:: SHA512 でハッシュ化されたキーを指定する
     # == 返り値
-    # 特になし。@key_list 配列を初期化
-    def initialize(auth_code = 'ac58c2bedf7c1d4e35136f2ca4f81acdece03fa9e90aeefa0d363488649c7f52d7064285923f814592d53c419f5c4db59ee1a867b4852d18e0fac6efd5874072')
-      @auth_code = auth_code
+    # nil
+    def initialize(secret_key = 'ac58c2bedf7c1d4e35136f2ca4f81acdece03fa9e90aeefa0d363488649c7f52d7064285923f814592d53c419f5c4db59ee1a867b4852d18e0fac6efd5874072')
+      @secret_key = secret_key
+      nil
     end
 
     # クライアント認証を行う
@@ -19,17 +20,15 @@ module Reins
     # key:: ハッシュ化される前のキー
     # ip:: 接続元のIPアドレス
     # == 返り値
-    # 認証:: ハッシュ化されたクライアント固有の識別キー
+    # 認証:: ハッシュ化されたクライアント固有識別の接続専用キー
     # 否認:: false
-    def authenticate(key, ip)
-      auth_key   = Digest::SHA512.hexdigest(key)
-
-      unless @auth_code == auth_key
+    def authenticate_key(key, ip)
+      unless @secret_key == Digest::SHA512.hexdigest(key)
         Reins::logger.fatal("#{ip} : 認証が失敗しました")
         return false
       end
 
-      Digest::SHA512.hexdigest(auth_key+ip)
+      Digest::SHA512.hexdigest("#{ip}:#{Random.new_seed}")
     end
 
     # クライアントの識別を行う
@@ -39,8 +38,8 @@ module Reins
     # == 返り値
     # 識別された場合:: 登録されているIPアドレス
     # 否認された場合:: nil
-    def varid(keycode)
-      Reins::clients.read_keyhosts.key(keycode)
+    def is_varid(keycode)
+      Reins::regist_host.read_hostkeys.key(keycode)
     end
   end
 end
