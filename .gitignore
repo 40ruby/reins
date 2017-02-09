@@ -4,6 +4,7 @@
 *.txt
 *.rbc
 *.csv
+/.rspec_status
 /.ruby-version
 /.config
 /coverage/
