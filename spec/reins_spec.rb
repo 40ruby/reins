@@ -42,8 +42,8 @@ RSpec.describe Reins do
         end
       end
       context "未登録コードの場合" do
-        it "空の配列が返る" do
-          expect(auth.varid(key)).to eq({})
+        it "nil" do
+          expect(auth.varid(key)).to eq(nil)
         end
       end
     end
@@ -51,7 +51,7 @@ RSpec.describe Reins do
 
   describe 'DataManager' do
     let(:hosts)           { Reins::DataManager.new("test_db.csv") }
-    let(:auth)            { Reins::Auth.new }
+    let(:key)             { "TestKey" }
     let(:localhost)       { '127.0.0.1' }
     let(:correct_hosts)   { ['192.168.0.10','1.0.0.1','239.255.255.254'] }
     let(:incorrect_hosts) { ['100','[100,100]','1:0:0:1','1/0/0/1','0.0.0.1','1.0.0.0','0.0.0.0','240.0.0.1','240.255.255.254','0.256.0.1','0.0.256.1','239.255.255.255','-1.0.0.0','0.-1.0.0','0.0.-1.0','0.0.0.-1'] }
@@ -61,7 +61,6 @@ RSpec.describe Reins do
     end
 
     describe '#create' do
-      let(:key)  { auth.authenticate('DEMO', localhost) }
       subject { hosts.create(localhost, key) }
       it '同じIPを追加すると false' do
         hosts.create(localhost, key)
@@ -76,17 +75,17 @@ RSpec.describe Reins do
           is_expected.to eq([])
         end
         it 'localhost を1つ登録すると、[127.0.0.1]' do
-          hosts.create(localhost, auth.authenticate('DEMO', localhost))
+          hosts.create(localhost, key)
           is_expected.to eq([localhost])
         end
         it '複数のアドレスを登録した場合は、複数のアドレス' do
-          correct_hosts.each   { |host| hosts.create(host, auth.authenticate('DEMO', host)) }
+          correct_hosts.each   { |host| hosts.create(host, key) }
           is_expected.to match_array(correct_hosts)
         end
       end
       context '不正なIPアドレスの場合' do
         it '有効範囲外のIPアドレスを登録しても登録されず、空の配列' do
-          incorrect_hosts.each { |host| hosts.create(host, auth.authenticate('DEMO', host)) }
+          incorrect_hosts.each { |host| hosts.create(host, key) }
           is_expected.to match_array([])
         end
       end
@@ -99,13 +98,13 @@ RSpec.describe Reins do
         expect(hosts.read_keyhosts.size).to eq(0)
       end
       it 'ハッシュ化された接続キーの一覧' do
-        correct_hosts.each   { |host| hosts.create(host, auth.authenticate('DEMO', host)) }
+        correct_hosts.each   { |host| hosts.create(host, key) }
         expect(hosts.read_keyhosts.size).to eq(3)
       end
     end
 
     describe '#update' do
-      before { hosts.create(localhost, auth.authenticate('DEMO', localhost)) }
+      before { hosts.create(localhost, key) }
       it '有効なIPアドレスへ変更すると host が変更' do
         before_host = localhost
         correct_hosts.each do |host|
@@ -127,11 +126,11 @@ RSpec.describe Reins do
     end
 
     describe '#delete' do
-      before { hosts.create("192.168.0.1", auth.authenticate('DEMO', "192.168.0.1"))}
+      before { hosts.create("192.168.0.1", key)}
       subject { hosts.delete(localhost) }
       context '正常に削除できる場合' do
         it '登録済みのアドレスを削除すると、そのアドレス' do
-          hosts.create(localhost, auth.authenticate('DEMO', localhost))
+          hosts.create(localhost, key)
           is_expected.to eq(localhost)
         end
       end

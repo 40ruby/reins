@@ -38,11 +38,9 @@ module Reins
     # key:: クライアント固有の識別キー
     # == 返り値
     # 識別された場合:: 登録されているIPアドレス
-    # 否認された場合:: []
+    # 否認された場合:: nil
     def varid(keycode)
-      Reins::clients.read_keyhosts.each do |addr, key|
-        return addr if key == keycode
-      end
+      Reins::clients.read_keyhosts.key(keycode)
     end
   end
 end
