@@ -119,7 +119,7 @@ module Reins
     # nil::    削除すべき要素が見つからなかったとき
     def delete(addr)
       if i = read_hosts.index(addr)
-        @hosts.delete(i)
+        @hosts.delete_at(i)
         Reins::logger.info("#{addr} を削除しました.")
         store
         return addr
