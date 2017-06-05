@@ -1,4 +1,5 @@
 # coding: utf-8
+# filename: dispatcher.rb
 
 module Reins
   class Dispatch
@@ -31,11 +32,11 @@ module Reins
 
       when /^update/ then
         Reins::logger.info("IPアドレス更新依頼がありました")
-        Reins::regist_host.update(@ipaddress, value)
+        Reins::regist_host.update(@ip_address, value)
 
       when /^delete/ then
         Reins::logger.info("削除依頼が発生しました")
-        Reins::regist_host.delete(@ipaddress)
+        Reins::regist_host.delete(@ip_address)
       end
     end
 

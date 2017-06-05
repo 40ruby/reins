@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+# coding: utf-8
+# filename: bin/reins
+
+require "reins"
+
+Reins::start

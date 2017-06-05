@@ -1,3 +1,6 @@
+# coding: utf-8
+# filename: lib/reins.rb
+
 require "reins/version"
 require "reins/dispatcher"
 require "reins/auth_service"
@@ -29,6 +32,8 @@ module Reins
             @host = Reins::Dispatch.new(addr, keycode)
 
             client.puts @host.command(command, options)
+          else
+            client.puts false
           end
         end
 

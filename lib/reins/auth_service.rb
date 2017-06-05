@@ -1,4 +1,5 @@
 # coding: utf-8
+# filename: auth_service.rb
 require "digest/sha2"
 
 module Reins
