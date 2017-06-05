@@ -4,18 +4,11 @@ require "socket"
 
 RSpec.describe Reins do
   describe "定数/変数の設定" do
-    it "Reins::VERSION の指定" do
-      expect(Reins::VERSION).not_to be nil
-    end
-    it "logger の指定" do
-      expect(Reins::logger).not_to be nil
-    end
-    it "data manager のインスタンス化" do
-      expect(Reins::auth_service).not_to be nil
-    end
-    it "authenticatorのインスタンス化" do
-      expect(Reins::regist_host).not_to be nil
-    end
+    it { expect(Reins::VERSION).not_to be nil }
+    it { expect(Reins::port).not_to be nil }
+    it { expect(Reins::logger).not_to be nil  }
+    it { expect(Reins::auth_service).not_to be nil }
+    it { expect(Reins::regist_host).not_to be nil }
   end
 
   # AuthService class のテスト
@@ -28,6 +21,11 @@ RSpec.describe Reins do
       context "正常に認証された場合" do
         it { expect(normal.authenticate_key('DEMO', '192.168.0.10')).not_to eq(false) }
         it { expect(other.authenticate_key('40ruby', '192.168.0.10')).not_to eq(false) }
+
+        it '登録済みのKeyが正常に登録されているか' do
+          normal.authenticate_key('DEMO', '192.168.0.10')
+          expect(normal.authenticate_key('DEMO', '192.168.0.10')).to eq(true)
+        end
       end
 
       context "異なる認証キーで呼び出された場合" do
@@ -47,9 +45,7 @@ RSpec.describe Reins do
         end
       end
       context "未登録コードの場合" do
-        it "nil" do
-          expect(auth.is_varid(key)).to eq(nil)
-        end
+        it { expect(auth.is_varid(key)).to eq(nil) }
       end
     end
   end
@@ -68,18 +64,16 @@ RSpec.describe Reins do
 
     describe '#create' do
       subject {regist_test.create(localhost, test_key) }
-      it '同じIPを追加すると false' do
+      before do
         regist_test.create(localhost, test_key)
-        is_expected.to eq(false)
       end
+      it  { is_expected.to eq(false) }
     end
 
     describe '#read_hosts' do
       subject {regist_test.read_hosts }
       context '正常に登録されている場合' do
-        it '未登録時に呼び出すと、空の配列' do
-          is_expected.to eq([])
-        end
+        it { is_expected.to eq([]) }
         it 'localhost を1つ登録すると、[127.0.0.1]' do
           regist_test.create(localhost, test_key)
           is_expected.to eq([localhost])
@@ -145,9 +139,7 @@ RSpec.describe Reins do
         end
       end
       context '削除できない場合' do
-        it '削除対象がなければ nil' do
-          is_expected.to eq(nil)
-        end
+        it { is_expected.to eq(nil) }
       end
     end
   end
@@ -189,4 +181,37 @@ RSpec.describe Reins do
     end
   end
 
+  # Dispatcher class のテスト
+  describe 'Dispatch' do
+    let(:test_key)       { "TestKey" }
+    let(:correct_host)   { Reins::Dispatch.new("192.168.0.10", test_key)}
+
+    describe '#command' do
+      context 'ホストを追加する場合' do
+        it 'ホストを正常に登録' do
+          allow(Reins::regist_host).to receive(:create).and_return(true)
+          expect(correct_host.command("add", "")).to eq(true)
+        end
+      end
+      context 'ホスト一覧を出力する場合' do
+        it 'ホスト一覧が出力された' do
+          allow(Reins::regist_host).to receive(:read_hosts).and_return([])
+          expect(correct_host.command("list", "")).to eq([])
+        end
+      end
+      context 'アドレスを更新する場合' do
+        it '正常に移行先アドレスへ更新' do
+          allow(Reins::regist_host).to receive(:update).and_return(true)
+          expect(correct_host.command("update", "172.16.0.1")).to eq(true)
+        end
+      end
+      context 'アドレスを削除する場合' do
+        it 'アドレスを正常に削除' do
+          allow(Reins::regist_host).to receive(:delete).and_return("192.168.0.10")
+          expect(correct_host.command("delete","")).to eq("192.168.0.10")
+        end
+      end
+
+    end
+  end
 end
