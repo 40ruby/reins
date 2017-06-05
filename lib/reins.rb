@@ -32,6 +32,8 @@ module Reins
             @host = Reins::Dispatch.new(addr, keycode)
 
             client.puts @host.command(command, options)
+          else
+            client.puts false
           end
         end
 
