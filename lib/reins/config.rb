@@ -1,4 +1,5 @@
 # coding: utf-8
+# filename: config.rb
 require 'logger'
 
 module Reins

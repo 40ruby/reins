@@ -1,4 +1,5 @@
 # coding: utf-8
+# filename: dispatcher.rb
 
 module Reins
   class Dispatch

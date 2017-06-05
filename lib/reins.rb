@@ -1,3 +1,6 @@
+# coding: utf-8
+# filename: lib/reins.rb
+
 require "reins/version"
 require "reins/dispatcher"
 require "reins/auth_service"
