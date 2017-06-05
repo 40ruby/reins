@@ -25,6 +25,7 @@ module Reins
     # false:: IPアドレスではないと思われる場合
 
     def check_ip(ip)
+      Reins::logger.debug("#{ip} : アドレスチェックを行います")
       # 引数は文字列のみを受け付けることとする
       return false unless ip.is_a?(String)
 
@@ -36,6 +37,7 @@ module Reins
       return false unless (0..255).cover?($3.to_i)
       return false unless (1..254).cover?($4.to_i)
 
+      Reins::logger.debug("#{ip} : アドレスに問題がありませんでした")
       return true
     end
 
@@ -43,8 +45,10 @@ module Reins
     # == パラメータ
     # filename:: 保管先ファイル名。指定がない場合は、初期化時に採用したファイル名
     def store(filename = @filename)
+      Reins::logger.debug("#{filename} : ホスト一覧を保存します")
       CSV.open(filename, "w") do |csv|
         @hosts.each do |addr|
+          Reins::logger.debug("保管中... > #{addr}")
           csv << addr
         end
       end
@@ -57,6 +61,7 @@ module Reins
     # true::  登録できた
     # false:: 既に同じアドレスまたはIPアドレスではないため、登録せず
     def create(addr, key)
+      Reins.logger.debug("#{addr} : ホスト登録処理を行います")
       if check_ip(addr) then
         unless read_hosts.include?(addr) then
           @hosts << [addr, key, Time.now]
@@ -68,6 +73,7 @@ module Reins
         end
       else
         Reins::logger.error("#{addr} は登録可能なIPアドレスではありません.")
+        false
       end
       false
     end

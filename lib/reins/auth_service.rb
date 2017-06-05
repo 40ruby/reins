@@ -1,5 +1,4 @@
 # coding: utf-8
-# require "digest/md5"
 require "digest/sha2"
 
 module Reins
@@ -29,7 +28,18 @@ module Reins
         return false
       end
 
-      Reins::regist_host.read_hosts.include?(ip) || Digest::SHA512.hexdigest("#{ip}:#{Random.new_seed}")
+      unless Reins::regist_host.read_hosts.include?(ip)
+        Reins::logger.info("#{ip} : 新たにホストを登録します")
+        keycode = Digest::SHA512.hexdigest("#{ip}:#{Random.new_seed}")
+
+        if Reins::regist_host.create(ip, keycode)
+          return keycode
+        end
+        false
+      else
+        Reins::logger.info("#{ip} : 認証が成功しました")
+        true
+      end
     end
 
     # クライアントの識別を行う
@@ -40,6 +50,7 @@ module Reins
     # 識別された場合:: 登録されているIPアドレス
     # 否認された場合:: nil
     def is_varid(keycode)
+      Reins::logger.debug("#{keycode} : クライアントの識別を行います")
       Reins::regist_host.read_hostkeys.key(keycode)
     end
   end

@@ -4,18 +4,11 @@ require "socket"
 
 RSpec.describe Reins do
   describe "定数/変数の設定" do
-    it "Reins::VERSION の指定" do
-      expect(Reins::VERSION).not_to be nil
-    end
-    it "logger の指定" do
-      expect(Reins::logger).not_to be nil
-    end
-    it "data manager のインスタンス化" do
-      expect(Reins::auth_service).not_to be nil
-    end
-    it "authenticatorのインスタンス化" do
-      expect(Reins::regist_host).not_to be nil
-    end
+    it { expect(Reins::VERSION).not_to be nil }
+    it { expect(Reins::port).not_to be nil }
+    it { expect(Reins::logger).not_to be nil  }
+    it { expect(Reins::auth_service).not_to be nil }
+    it { expect(Reins::regist_host).not_to be nil }
   end
 
   # AuthService class のテスト
@@ -52,9 +45,7 @@ RSpec.describe Reins do
         end
       end
       context "未登録コードの場合" do
-        it "nil" do
-          expect(auth.is_varid(key)).to eq(nil)
-        end
+        it { expect(auth.is_varid(key)).to eq(nil) }
       end
     end
   end
@@ -73,18 +64,16 @@ RSpec.describe Reins do
 
     describe '#create' do
       subject {regist_test.create(localhost, test_key) }
-      it '同じIPを追加すると false' do
+      before do
         regist_test.create(localhost, test_key)
-        is_expected.to eq(false)
       end
+      it  { is_expected.to eq(false) }
     end
 
     describe '#read_hosts' do
       subject {regist_test.read_hosts }
       context '正常に登録されている場合' do
-        it '未登録時に呼び出すと、空の配列' do
-          is_expected.to eq([])
-        end
+        it { is_expected.to eq([]) }
         it 'localhost を1つ登録すると、[127.0.0.1]' do
           regist_test.create(localhost, test_key)
           is_expected.to eq([localhost])
@@ -150,9 +139,7 @@ RSpec.describe Reins do
         end
       end
       context '削除できない場合' do
-        it '削除対象がなければ nil' do
-          is_expected.to eq(nil)
-        end
+        it { is_expected.to eq(nil) }
       end
     end
   end
@@ -198,8 +185,6 @@ RSpec.describe Reins do
   describe 'Dispatch' do
     let(:test_key)       { "TestKey" }
     let(:correct_host)   { Reins::Dispatch.new("192.168.0.10", test_key)}
-    let(:incorrect_host) { Reins::Dispatch.new(test_key)}
-    let(:illegal_host)   { Reins::Dispatch.new(test_key)}
 
     describe '#command' do
       context 'ホストを追加する場合' do
@@ -226,7 +211,7 @@ RSpec.describe Reins do
           expect(correct_host.command("delete","")).to eq("192.168.0.10")
         end
       end
+
     end
   end
-
 end

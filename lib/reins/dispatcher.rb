@@ -21,19 +21,21 @@ module Reins
     # exception以外:: コマンドの実行結果
     def command(comm, value)
       case comm
-      when /^(add|create).*/ then
-        return true if Reins::regist_host.create(@ip_address, @key)
-        false
+      when /^add/ then
+        Reins::logger.info("#{@ip_address} を追加するよう指示がありました")
+        Reins::regist_host.create(@ip_address, @key)
 
       when /^list/ then
+        Reins::logger.info("一覧表示コマンドを受け付けました")
         Reins::regist_host.read_hosts
 
       when /^update/ then
-        return true if Reins::regist_host.update(@ipaddress, value)
-        false
+        Reins::logger.info("IPアドレス更新依頼がありました")
+        Reins::regist_host.update(@ipaddress, value)
 
       when /^delete/ then
-        return Reins::regist_host.delete(@ipaddress)
+        Reins::logger.info("削除依頼が発生しました")
+        Reins::regist_host.delete(@ipaddress)
       end
     end
 
