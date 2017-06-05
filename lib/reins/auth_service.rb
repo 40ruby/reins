@@ -20,7 +20,8 @@ module Reins
     # key:: ハッシュ化される前のキー
     # ip:: 接続元のIPアドレス
     # == 返り値
-    # 認証:: ハッシュ化されたクライアント固有識別の接続専用キー
+    # 新規認証:: ハッシュ化されたクライアント固有識別の接続専用キー
+    # IPアドレス登録済み:: true
     # 否認:: false
     def authenticate_key(key, ip)
       unless @secret_key == Digest::SHA512.hexdigest(key)
@@ -28,7 +29,7 @@ module Reins
         return false
       end
 
-      Digest::SHA512.hexdigest("#{ip}:#{Random.new_seed}")
+      Reins::regist_host.read_hosts.include?(ip) || Digest::SHA512.hexdigest("#{ip}:#{Random.new_seed}")
     end
 
     # クライアントの識別を行う

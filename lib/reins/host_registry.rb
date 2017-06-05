@@ -81,7 +81,7 @@ module Reins
 
     # 登録済みホスト一覧を配列で返す
     # == 返り値
-    # array: 登録済みのホスト一覧
+    # array: 登録済みのIPアドレス一覧
     def read_hosts
       read_hostkeys.keys
     end

@@ -28,6 +28,11 @@ RSpec.describe Reins do
       context "正常に認証された場合" do
         it { expect(normal.authenticate_key('DEMO', '192.168.0.10')).not_to eq(false) }
         it { expect(other.authenticate_key('40ruby', '192.168.0.10')).not_to eq(false) }
+
+        it '登録済みのKeyが正常に登録されているか' do
+          normal.authenticate_key('DEMO', '192.168.0.10')
+          expect(normal.authenticate_key('DEMO', '192.168.0.10')).to eq(true)
+        end
       end
 
       context "異なる認証キーで呼び出された場合" do
@@ -184,6 +189,41 @@ RSpec.describe Reins do
         subject { tasks.disconnect }
         it 'こちらから、クライアントとの接続を切断して、成功すると nil' do
           is_expected.to eq(nil)
+        end
+      end
+    end
+  end
+
+  # Dispatcher class のテスト
+  describe 'Dispatch' do
+    let(:test_key)       { "TestKey" }
+    let(:correct_host)   { Reins::Dispatch.new("192.168.0.10", test_key)}
+    let(:incorrect_host) { Reins::Dispatch.new(test_key)}
+    let(:illegal_host)   { Reins::Dispatch.new(test_key)}
+
+    describe '#command' do
+      context 'ホストを追加する場合' do
+        it 'ホストを正常に登録' do
+          allow(Reins::regist_host).to receive(:create).and_return(true)
+          expect(correct_host.command("add", "")).to eq(true)
+        end
+      end
+      context 'ホスト一覧を出力する場合' do
+        it 'ホスト一覧が出力された' do
+          allow(Reins::regist_host).to receive(:read_hosts).and_return([])
+          expect(correct_host.command("list", "")).to eq([])
+        end
+      end
+      context 'アドレスを更新する場合' do
+        it '正常に移行先アドレスへ更新' do
+          allow(Reins::regist_host).to receive(:update).and_return(true)
+          expect(correct_host.command("update", "172.16.0.1")).to eq(true)
+        end
+      end
+      context 'アドレスを削除する場合' do
+        it 'アドレスを正常に削除' do
+          allow(Reins::regist_host).to receive(:delete).and_return("192.168.0.10")
+          expect(correct_host.command("delete","")).to eq("192.168.0.10")
         end
       end
     end
