@@ -1,4 +1,5 @@
 # encoding: utf-8
+
 # filename: task_control.rb
 
 module Reins
@@ -10,11 +11,9 @@ module Reins
     # == 返り値
     # 接続された通信用のソケットオブジェクト
     def initialize(hostname = '127.0.0.1', port = 24368)
-      begin
         @s = TCPSocket.open(hostname, port)
       rescue => e
         notify(e)
-      end
     end
 
     # クライアントとの死活確認

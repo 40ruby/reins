@@ -1,4 +1,5 @@
 # coding: utf-8
+
 # filename: lib/reins.rb
 
 require "reins/version"
@@ -12,8 +13,8 @@ require "socket"
 
 module Reins
   def start
-    server = TCPServer.new(Reins::port)
-    Reins::logger.info("Reins #{VERSION} を #{Reins::port} で起動しました")
+    server = TCPServer.new(Reins.port)
+    Reins.logger.info("Reins #{VERSION} を #{Reins.port} で起動しました")
 
     loop do
       begin
@@ -22,13 +23,13 @@ module Reins
           keycode, command, options = client.gets.chomp.split
 
           if command == 'auth'
-            Reins::logger.debug("#{addr} : 認証を行います")
-            @keycode = Reins::auth_service.authenticate_key(keycode, addr)
-            Reins::logger.debug("取得したキーコード : #{@keycode}")
+            Reins.logger.debug("#{addr} : 認証を行います")
+            @keycode = Reins.auth_service.authenticate_key(keycode, addr)
+            Reins.logger.debug("取得したキーコード : #{@keycode}")
 
             client.puts @keycode
-          elsif Reins::auth_service.is_varid(keycode) == addr
-            Reins::logger.debug("#{command} : 実行します")
+          elsif Reins.auth_service.varid?(keycode) == addr
+            Reins.logger.debug("#{command} : 実行します")
             @host = Reins::Dispatch.new(addr, keycode)
 
             client.puts @host.command(command, options)
@@ -36,10 +37,9 @@ module Reins
             client.puts false
           end
         end
-
       rescue Interrupt => e
         p e
-        Reins::regist_host.store
+        Reins.regist_host.store
         server.close
         exit
       end

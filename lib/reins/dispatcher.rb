@@ -1,4 +1,5 @@
 # coding: utf-8
+
 # filename: dispatcher.rb
 
 module Reins
@@ -23,22 +24,21 @@ module Reins
     def command(comm, value)
       case comm
       when /^add/ then
-        Reins::logger.info("#{@ip_address} を追加するよう指示がありました")
-        Reins::regist_host.create(@ip_address, @key)
+        Reins.logger.info("#{@ip_address} を追加するよう指示がありました")
+        Reins.regist_host.create(@ip_address, @key)
 
       when /^list/ then
-        Reins::logger.info("一覧表示コマンドを受け付けました")
-        Reins::regist_host.read_hosts
+        Reins.logger.info("一覧表示コマンドを受け付けました")
+        Reins.regist_host.read_hosts
 
       when /^update/ then
-        Reins::logger.info("IPアドレス更新依頼がありました")
-        Reins::regist_host.update(@ip_address, value)
+        Reins.logger.info("IPアドレス更新依頼がありました")
+        Reins.regist_host.update(@ip_address, value)
 
       when /^delete/ then
-        Reins::logger.info("削除依頼が発生しました")
-        Reins::regist_host.delete(@ip_address)
+        Reins.logger.info("削除依頼が発生しました")
+        Reins.regist_host.delete(@ip_address)
       end
     end
-
   end
 end

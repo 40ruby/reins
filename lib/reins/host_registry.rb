@@ -1,5 +1,7 @@
 # coding: utf-8
+
 require 'csv'
+require 'ipaddr'
 
 module Reins
   class HostRegistry
@@ -13,7 +15,7 @@ module Reins
     # 特になし。但し、@hosts インスタンス変数へ、データベースの内容を保持
     def initialize(filename)
       @filename = filename
-      @hosts    =  File.exists?(@filename) ? CSV.read(@filename) : []
+      @hosts = File.exist?(@filename) ? CSV.read(@filename) : []
     end
 
     # IPアドレスのチェック
@@ -25,30 +27,30 @@ module Reins
     # false:: IPアドレスではないと思われる場合
 
     def check_ip(ip)
-      Reins::logger.debug("#{ip} : アドレスチェックを行います")
+      Reins.logger.debug("#{ip} : アドレスチェックを行います")
       # 引数は文字列のみを受け付けることとする
       return false unless ip.is_a?(String)
 
       # 正規表現で、各数値を入手
       /^([0-9]*)\.([0-9]*)\.([0-9]*)\.([0-9]*)$/ =~ ip
 
-      return false unless (1..239).cover?($1.to_i)
-      return false unless (0..255).cover?($2.to_i)
-      return false unless (0..255).cover?($3.to_i)
-      return false unless (1..254).cover?($4.to_i)
+      return false unless (1..239).cover?(Regexp.last_match(1).to_i)
+      return false unless (0..255).cover?(Regexp.last_match(2).to_i)
+      return false unless (0..255).cover?(Regexp.last_match(3).to_i)
+      return false unless (1..254).cover?(Regexp.last_match(4).to_i)
 
-      Reins::logger.debug("#{ip} : アドレスに問題がありませんでした")
-      return true
+      Reins.logger.debug("#{ip} : アドレスに問題がありませんでした")
+      true
     end
 
     # メモリ上のアドレスリストを、ファイルへ保管する
     # == パラメータ
     # filename:: 保管先ファイル名。指定がない場合は、初期化時に採用したファイル名
     def store(filename = @filename)
-      Reins::logger.debug("#{filename} : ホスト一覧を保存します")
+      Reins.logger.debug("#{filename} : ホスト一覧を保存します")
       CSV.open(filename, "w") do |csv|
         @hosts.each do |addr|
-          Reins::logger.debug("保管中... > #{addr}")
+          Reins.logger.debug("保管中... > #{addr}")
           csv << addr
         end
       end
@@ -60,19 +62,20 @@ module Reins
     # == 返り値
     # true::  登録できた
     # false:: 既に同じアドレスまたはIPアドレスではないため、登録せず
-    def create(addr, key)
-      Reins.logger.debug("#{addr} : ホスト登録処理を行います")
-      if check_ip(addr) then
-        unless read_hosts.include?(addr) then
+    def create(ipaddr, key)
+      Reins.logger.debug("#{ipaddr} : ホスト登録処理を行います")
+      addr = IPAddr.new(ipaddr).native.to_s
+      if check_ip(addr)
+        if read_hosts.include?(addr)
+          Reins.logger.error("#{addr} は既に登録されています.")
+        else
           @hosts << [addr, key, Time.now]
-          Reins::logger.info("#{addr} を追加しました")
+          Reins.logger.info("#{addr} を追加しました")
           store
           return true
-        else
-          Reins::logger.error("#{addr} は既に登録されています.")
         end
       else
-        Reins::logger.error("#{addr} は登録可能なIPアドレスではありません.")
+        Reins.logger.error("#{addr} は登録可能なIPアドレスではありません.")
         false
       end
       false
@@ -99,15 +102,15 @@ module Reins
     # after::  変更後のアドレス
     def update(before, after)
       if read_hosts.include?(after) || !check_ip(after)
-        Reins::logger.error("#{after} は既に登録済みか、有効なIPアドレスではありません.")
-        return false
+        Reins.logger.error("#{after} は既に登録済みか、有効なIPアドレスではありません.")
+        false
       elsif i = read_hosts.index(before)
         @hosts[i][0] = after
-        Reins::logger.info("#{before} から #{after} へ変更しました.")
-        return true
+        Reins.logger.info("#{before} から #{after} へ変更しました.")
+        true
       else
-        Reins::logger.error("変更元の #{before} が見つかりません.")
-        return false
+        Reins.logger.error("変更元の #{before} が見つかりません.")
+        false
       end
     end
 
@@ -120,12 +123,12 @@ module Reins
     def delete(addr)
       if i = read_hosts.index(addr)
         @hosts.delete_at(i)
-        Reins::logger.info("#{addr} を削除しました.")
+        Reins.logger.info("#{addr} を削除しました.")
         store
-        return addr
+        addr
       else
-        Reins::logger.warn("#{addr} が見つかりません.")
-        return nil
+        Reins.logger.warn("#{addr} が見つかりません.")
+        nil
       end
     end
 
