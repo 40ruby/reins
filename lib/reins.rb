@@ -27,7 +27,9 @@ module Reins
           if command == 'auth'
             Reins.logger.debug("#{addr} : 認証を行います")
             if (@keycode = Reins.auth_service.authenticate_key(keycode, addr))
-              unless @keycode == true
+              if @keycode == true
+                client.puts Reins.regist_host.read_hostkeys[addr]
+              else
                 Reins.logger.debug("取得したキーコード : #{@keycode}")
                 client.puts Reins.regist_host.create(addr, @keycode) ? @keycode : "NG: ホスト登録失敗"
               end
@@ -41,8 +43,11 @@ module Reins
 
             client.puts @host.command(command, options)
           else
-            client.puts false
+            Reins.logger.warn("#{command} : 実行できませんでした")
+            client.puts "NG: コマンドが実行できませんでした"
           end
+
+          client.close
         end
       rescue Interrupt => e
         Reins.logger.info(e.to_s)

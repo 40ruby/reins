@@ -20,6 +20,10 @@ RSpec.describe Reins do
       let(:normal) { Reins::AuthService.new }
       let(:other)  { Reins::AuthService.new(sha512) }
 
+      context "ハッシュキーを作成する場合" do
+        it { expect(normal.create_key('192.168.0.10')).to match(/[0-9a-f]{128}/) }
+      end
+
       context "正常に認証された場合" do
         it { expect(normal.authenticate_key('DEMO', '192.168.0.10')).not_to eq(false) }
         it { expect(other.authenticate_key('40ruby', '192.168.0.10')).not_to eq(false) }

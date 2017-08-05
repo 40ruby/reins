@@ -54,8 +54,6 @@ module Reins
     # true::  登録できた
     # false:: 既に同じアドレスまたはIPアドレスではないため、登録せず
     def create(ipaddr, key)
-      Reins.logger.debug("#{ipaddr} : ホスト登録処理を行います")
-
       if (addr = varid_ip?(ipaddr))
         @hosts << [addr, key, Time.now.getlocal]
         Reins.logger.info("#{addr} を追加しました")

@@ -23,26 +23,17 @@ module Reins
       Digest::SHA512.hexdigest("#{ipaddr}:#{Random.new_seed}")
     end
 
-    # サーバ認証キーが正しいか検査する
-    # == パラメータ
-    # key:: サーバ認証キー
-    # == 返り値
-    # true:: 正常なサーバ認証キー
-    # false:: 不正なサーバ認証キー
-    def varid_key?(key)
-      @secret_key == Digest::SHA512.hexdigest(key) ? true : false
-    end
-
     # クライアント認証を行う
     # 接続元が要求してきたキーが、サーバ側で設定されているハッシュ値と比較する
     # == パラメータ
     # key:: ハッシュ化される前のキー
     # ipaddr:: 接続元のIPアドレス
     # == 返り値
+    # キー:: 新規にホスト登録が必要なクライアントキーを発行
     # true:: 認証成功
     # false:: 認証不可 または、新規登録不可
     def authenticate_key(key, ipaddr)
-      if varid_key?(key)
+      if @secret_key == Digest::SHA512.hexdigest(key)
         Reins.logger.info("#{ipaddr} : 認証が成功しました")
         Reins.regist_host.read_hosts.include?(ipaddr) ? true : create_key(ipaddr)
       else
@@ -59,7 +50,6 @@ module Reins
     # 識別された場合:: 登録されているIPアドレス
     # 否認された場合:: nil
     def varid?(keycode)
-      Reins.logger.debug("#{keycode} : クライアントの識別を行います")
       Reins.regist_host.read_hostkeys.key(keycode)
     end
   end
