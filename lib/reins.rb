@@ -10,6 +10,7 @@ require "reins/task_control"
 require "reins/config"
 
 require "socket"
+require "ipaddr"
 
 module Reins
   def start
@@ -19,15 +20,21 @@ module Reins
     loop do
       begin
         Thread.start(server.accept) do |client|
-          addr = client.peeraddr[3]
+          addr = IPAddr.new(client.peeraddr[3]).native.to_s
           keycode, command, options = client.gets.chomp.split
+          Reins.logger.debug("addr = #{addr}, keycode = #{keycode}, command = #{command}, options = #{options}")
 
           if command == 'auth'
             Reins.logger.debug("#{addr} : 認証を行います")
-            @keycode = Reins.auth_service.authenticate_key(keycode, addr)
-            Reins.logger.debug("取得したキーコード : #{@keycode}")
+            if (@keycode = Reins.auth_service.authenticate_key(keycode, addr))
+              unless @keycode == true
+                Reins.logger.debug("取得したキーコード : #{@keycode}")
+                client.puts Reins.regist_host.create(addr, @keycode) ? @keycode : "NG: ホスト登録失敗"
+              end
+            else
+              client.puts "NG: 認証ミス"
+            end
 
-            client.puts @keycode
           elsif Reins.auth_service.varid?(keycode) == addr
             Reins.logger.debug("#{command} : 実行します")
             @host = Reins::Dispatch.new(addr, keycode)
@@ -38,7 +45,7 @@ module Reins
           end
         end
       rescue Interrupt => e
-        p e
+        Reins.logger.info(e.to_s)
         Reins.regist_host.store
         server.close
         exit

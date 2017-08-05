@@ -1,7 +1,6 @@
 # encoding: utf-8
 
 # filename: task_control.rb
-
 module Reins
   class TaskControl
     # クライアントとの接続
@@ -10,10 +9,10 @@ module Reins
     # port:: 接続先クライアントのTCPポート番号。通常は 24368
     # == 返り値
     # 接続された通信用のソケットオブジェクト
-    def initialize(hostname = '127.0.0.1', port = 24368)
-        @s = TCPSocket.open(hostname, port)
-      rescue => e
-        notify(e)
+    def initialize(hostname = '127.0.0.1', port = 24_368)
+      @s = TCPSocket.open(hostname, port)
+    rescue => e
+      notify(e)
     end
 
     # クライアントとの死活確認
@@ -23,15 +22,13 @@ module Reins
     # true:: 生存確認
     # false:: クライアントが停止、またはネットワーク上に問題あり
     def connect
-      begin
-        true
-      rescue => e
-        notify(e)
-      end
+      true
+    rescue => e
+      notify(e)
     end
 
     # エラーが発生した場合に一時的に飛ばされてくるメソッド
-    def notify(error)
+    def notify(_error)
       raise(StandardError, 'Not Connect')
     end
 
