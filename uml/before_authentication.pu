@@ -1,0 +1,42 @@
+@startuml
+
+actor Reins_Agent as user
+boundary Clients as clients
+control AuthService as auth
+entity HostRegistry as host
+
+autonumber "[00]"
+
+user -> clients : run_auth(Keycode)
+
+clients -> auth : authenticate_key(Keycode, IP address)
+
+auth -> auth : secret_key?
+note right : Keycode は正しいか?
+
+alt Keycode is varid
+  auth -> host : include?
+  note right : すでに登録済みか?
+  host --> auth : true or false
+
+  alt unregisterd
+    auth -> auth : create_key()
+    auth --> clients : identified_key
+
+    clients --> user : identified_key
+
+  else registerd
+    auth --> clients : true
+
+    clients -> host : read_hostkeys(IP Address)
+    host --> clients : identified_key
+
+    clients --> user : identified_key
+  end
+
+else not varid
+  auth --> clients : fatal
+  clients --> user : "false"
+end
+
+@enduml

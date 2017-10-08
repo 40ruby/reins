@@ -1,0 +1,38 @@
+@startuml
+
+actor Reins_Agent as user
+boundary Reins_Server as server
+control Clients as clients
+control Dispatcher as dispatch
+entity HostRegistry as host
+
+autonumber "[00]"
+
+user -> server: keycode, command
+note right: 'auth'コマンド以外
+
+alt keycode is varid
+  clients -> dispatch: command(keycode, command)
+
+  alt list
+    dispatch -> host: read_hosts(keycode,IP Address)
+    host -> host: varid?()
+    host --> dispatch: keys
+
+  else delete
+    dispatch -> host: delete(keycode,IP Address)
+    host -> host: varid?()
+    host -> host: store
+    host --> dispatch: result
+  end
+
+  dispatch --> clients: results
+  clients --> server: results
+
+else not varid
+  clients --> server: "fatal"
+end
+
+server --> user: results
+
+@enduml
