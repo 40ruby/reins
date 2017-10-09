@@ -1,0 +1,51 @@
+@startuml
+
+class Clients {
+  command: string
+  -keycode: string
+  -options: string
+  -addr: string
+  +run_auth()
+  +run_command()
+}
+
+class AuthService {
+  -secret_key: string
+  +create_key()
+  +authenticate_key()
+}
+
+class Dispatch {
+  -addr: string
+  -keycode: string
+  +command()
+}
+
+class HostRegistry {
+  +hosts: objects
+  -filename: string
+  -varid_ip?()
+  -varid?()
+  +create()
+  +read_hostkeys()
+  +read_hosts()
+  +delete()
+  +empty?()
+}
+
+class Hosts {
+  IP Address
+  keycode
+  created_date
+  updated_date
+  status
+}
+
+Clients --> Dispatch
+Clients --> AuthService
+AuthService "*" --> "1" HostRegistry
+Dispatch --> HostRegistry
+HostRegistry --> Clients
+HostRegistry "1" --> "*" Hosts
+
+@enduml

@@ -2,7 +2,6 @@
 
 actor TaskControl as server
 boundary Reins_Agent as agent
-control AuthService as auth
 control ExecCommands as comm
 
 entity HostRegistry as host
@@ -10,39 +9,26 @@ entity HostRegistry as host
 autonumber "[00]"
 
 loop all_clients
-== check client ==
 
 server -> agent: identified_key
-activate agent
-
-agent -> auth: identified_key
-activate auth
-
-auth -> auth: is_varid?()
-
-auth --> agent: true or false
-deactivate auth
 
 == connection check ==
 
-alt identified_key is varid
-  agent -> comm: check()
-  activate comm
-  comm --> agent: status
-  deactivate comm
-else not varid
-  agent -> agent: not_varid()
-  note right: "status"
-end
+agent -> comm: check(identified_key)
+activate comm
+comm -> comm: varid?(identified_key)
+comm --> agent: status
+deactivate comm
+destroy comm
 
 agent --> server: status
 deactivate agent
 
 == logging status ==
 
-server -> host: rewrite_status(IPaddress, status)
+server -> host: rewrite_status(identified_key, status)
 activate host
-host -> host: get_status()
+host -> host: set_status(identified_key, IPaddress, status)
 host -> host: store()
 host --> server: true or false
 deactivate host
