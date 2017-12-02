@@ -1,0 +1,51 @@
+@startuml
+
+actor Reins_Agent as user
+boundary Reins_Server as server
+control Clients as clients
+control AuthService as auth
+control Dispatcher as dispatch
+entity HostRegistry as host
+
+autonumber "[00]"
+
+== Varidation ==
+
+user -> server: keycode, command
+note right: 'auth'コマンド以外
+
+server -> clients: run_command(keycode)
+
+clients -> auth: varid?(keycode)
+note right: 識別キーは正しいか?
+auth --> clients: true or falth
+
+== run command ==
+alt keycode is varid
+  clients -> dispatch: command(command, options)
+
+  alt add
+    dispatch -> host: create(IP Address, keycode)
+    host -> host: store
+    host --> dispatch: true or false
+
+  else list
+    dispatch -> host: read_hosts
+    host --> dispatch: keys
+
+  else delete
+    dispatch -> host: delete(IP Address)
+    host -> host: store
+    host --> dispatch: true or false
+  end
+
+  dispatch --> clients: results
+  clients --> server: results
+
+else not varid
+  clients --> server: "fatal"
+end
+
+server --> user: results
+
+@enduml

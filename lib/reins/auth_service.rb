@@ -1,6 +1,6 @@
 # coding: utf-8
-# filename: auth_service.rb
-require "digest/sha2"
+
+require 'digest/sha2'
 
 module Reins
   class AuthService
@@ -14,32 +14,31 @@ module Reins
       nil
     end
 
+    # IPアドレスをキーにした専用のキーを発行する
+    # == パラメータ
+    # ipaddr:: IPアドレス
+    # == 返り値
+    # キー:: ハッシュ化された識別キー
+    def create_key(ipaddr)
+      Digest::SHA512.hexdigest("#{ipaddr}:#{Random.new_seed}")
+    end
+
     # クライアント認証を行う
     # 接続元が要求してきたキーが、サーバ側で設定されているハッシュ値と比較する
     # == パラメータ
     # key:: ハッシュ化される前のキー
-    # ip:: 接続元のIPアドレス
+    # ipaddr:: 接続元のIPアドレス
     # == 返り値
-    # 新規認証:: ハッシュ化されたクライアント固有識別の接続専用キー
-    # IPアドレス登録済み:: true
-    # 否認:: false
-    def authenticate_key(key, ip)
-      unless @secret_key == Digest::SHA512.hexdigest(key)
-        Reins::logger.fatal("#{ip} : 認証が失敗しました")
-        return false
-      end
-
-      unless Reins::regist_host.read_hosts.include?(ip)
-        Reins::logger.info("#{ip} : 新たにホストを登録します")
-        keycode = Digest::SHA512.hexdigest("#{ip}:#{Random.new_seed}")
-
-        if Reins::regist_host.create(ip, keycode)
-          return keycode
-        end
-        false
+    # キー:: 新規にホスト登録が必要なクライアントキーを発行
+    # true:: 認証成功
+    # false:: 認証不可 または、新規登録不可
+    def authenticate_key(key, ipaddr)
+      if @secret_key == Digest::SHA512.hexdigest(key)
+        Reins.logger.info("#{ipaddr} : 認証が成功しました")
+        Reins.regist_host.read_hosts.include?(ipaddr) ? true : create_key(ipaddr)
       else
-        Reins::logger.info("#{ip} : 認証が成功しました")
-        true
+        Reins.logger.fatal("#{ipaddr} : 認証が失敗しました")
+        false
       end
     end
 
@@ -50,9 +49,8 @@ module Reins
     # == 返り値
     # 識別された場合:: 登録されているIPアドレス
     # 否認された場合:: nil
-    def is_varid(keycode)
-      Reins::logger.debug("#{keycode} : クライアントの識別を行います")
-      Reins::regist_host.read_hostkeys.key(keycode)
+    def varid?(keycode)
+      Reins.regist_host.read_hostkeys.key(keycode)
     end
   end
 end

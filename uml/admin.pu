@@ -1,0 +1,40 @@
+@startuml
+
+actor TaskControl as server
+boundary Reins_Agent as agent
+control ExecCommands as comm
+
+entity HostRegistry as host
+
+autonumber "[00]"
+
+loop all_clients
+
+server -> agent: identified_key
+
+== connection check ==
+
+agent -> comm: check(identified_key)
+activate comm
+comm -> comm: varid?(identified_key)
+comm --> agent: status
+deactivate comm
+destroy comm
+
+agent --> server: status
+deactivate agent
+
+== logging status ==
+
+server -> host: rewrite_status(identified_key, status)
+activate host
+host -> host: set_status(identified_key, IPaddress, status)
+host -> host: store()
+host --> server: true or false
+deactivate host
+
+end
+
+
+
+@enduml
