@@ -9,30 +9,38 @@ entity HostRegistry as host
 autonumber "[00]"
 
 user -> server: keycode, command
+activate server
 note right: 'auth'コマンド以外
 
-alt keycode is varid
+server -> clients: run_command()
+activate clients
   clients -> dispatch: command(keycode, command)
+  activate dispatch
 
   alt list
     dispatch -> host: read_hosts(keycode,IP Address)
+    activate host
     host -> host: varid?()
     host --> dispatch: keys
+    deactivate host
 
   else delete
     dispatch -> host: delete(keycode,IP Address)
+    activate host
     host -> host: varid?()
     host -> host: store
     host --> dispatch: result
+    deactivate host
   end
 
   dispatch --> clients: results
+  deactivate dispatch
+  destroy dispatch
   clients --> server: results
-
-else not varid
-  clients --> server: "fatal"
-end
+  deactivate clients
+  destroy clients
 
 server --> user: results
+deactivate server
 
 @enduml

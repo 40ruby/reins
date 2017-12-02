@@ -1,29 +1,29 @@
 @startuml
 
 class Clients {
-  command: string
-  -keycode: string
-  -options: string
-  -addr: string
+  command: String
+  -keycode: String
+  -options: String
+  -addr: String
   +run_auth()
   +run_command()
 }
 
 class AuthService {
-  -secret_key: string
+  -secret_key: String
   +create_key()
   +authenticate_key()
 }
 
 class Dispatch {
-  -addr: string
-  -keycode: string
+  -addr: String
+  -keycode: String
   +command()
 }
 
 class HostRegistry {
-  +hosts: objects
-  -filename: string
+  +hosts: Object
+  -filename: String
   -varid_ip?()
   -varid?()
   +create()
@@ -34,11 +34,11 @@ class HostRegistry {
 }
 
 class Hosts {
-  IP Address
-  keycode
-  created_date
-  updated_date
-  status
+  IP Address: String
+  keycode: String
+  created_date: Date
+  updated_date: Date
+  status: String
 }
 
 Clients --> Dispatch
