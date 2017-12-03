@@ -1,4 +1,5 @@
 # coding: utf-8
+
 require 'digest/sha2'
 
 module Reins
@@ -20,7 +21,7 @@ module Reins
     # キー:: ハッシュ化された識別キー
     def create_key(ipaddr)
       new_key = Digest::SHA512.hexdigest("#{ipaddr}:#{Random.new_seed}")
-      Reins.regist_host.create(ipaddr, new_key) ? new_key : false
+      Reins.regist_host.create(ipaddr, new_key)
     end
 
     # クライアント認証を行う

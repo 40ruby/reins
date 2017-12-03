@@ -41,14 +41,43 @@ module Reins
       server.close
       exit
     end
+
+    #
+    def connect_client(server)
+      Thread.start(server.accept) do |c|
+        client = Reins::Clients.new(c)
+        status = {}
+        status["keycode"] = client.keycode
+        status["result"]  = client.command == 'auth' ? client.run_auth : client.run_command
+        c.puts JSON.pretty_generate(status)
+        c.close
+      end
+    rescue Interrupt
+      exit_server(server)
+    end
   end
 
   class Clients
-    attr_reader :command
     def initialize(client)
-      @keycode, @command, @options = client.gets.chomp.split
-      @addr = IPAddr.new(client.peeraddr[3]).native.to_s
-      Reins.logger.debug("addr = #{@addr}, keycode = #{@keycode}, command = #{@command}, options = #{@options}")
+      @message = JSON.parse(client.gets)
+      Reins.logger.debug(@message)
+      @message["IP address"] = IPAddr.new(client.peeraddr[3]).native.to_s
+    end
+
+    def addr
+      @message["IP address"]
+    end
+
+    def keycode
+      @message["keycode"]
+    end
+
+    def command
+      @message["command"]
+    end
+
+    def options
+      @message["options"]
     end
 
     # 認証処理を行う
@@ -58,8 +87,8 @@ module Reins
     # key:: 認証が成功した場合は接続用の認証キーを返す
     # false:: 認証が失敗した時は "false" 文字列を返す
     def run_auth
-      Reins.logger.debug("#{@addr} : 認証を行います")
-      if (key = Reins.auth_service.authenticate_key(@keycode, @addr))
+      Reins.logger.debug("#{addr} : 認証を行います")
+      if (key = Reins.auth_service.authenticate_key(keycode, addr))
         key
       else
         "false"
@@ -73,11 +102,7 @@ module Reins
     # false:: 実行できなければ "false" 文字列を返す
     # false以外:: 実行された結果を、改行を含む文字列で返す
     def run_command
-      if Reins.auth_service.varid?(@keycode) == @addr
-        Reins::Dispatch.new(@addr, @keycode).command(@command, @options)
-      else
-        "false"
-      end
+      Reins::Dispatch.new(addr, keycode).command(command, options)
     end
   end
 
@@ -85,15 +110,7 @@ module Reins
     server = run_server(Reins.port)
 
     loop do
-      begin
-        Thread.start(server.accept) do |c|
-          client = Reins::Clients.new(c)
-          c.puts client.command == 'auth' ? client.run_auth : client.run_command
-          c.close
-        end
-      rescue Interrupt
-        exit_server(server)
-      end
+      connect_client(server)
     end
   end
 

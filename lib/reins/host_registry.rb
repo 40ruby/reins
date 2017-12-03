@@ -1,4 +1,5 @@
 # coding: utf-8
+
 # filename: host_registry.rb
 require 'json'
 require 'ipaddr'
@@ -28,8 +29,12 @@ module Reins
     def store(filename = @filename)
       Reins.logger.debug("#{filename} : ホスト一覧を保存します")
       File.open(filename, "w") do |file|
-        JSON.dump(@hosts, file)
+        file.puts(JSON.pretty_generate(@hosts))
       end
+      true
+    rescue
+      Reins.logger.fatal("#{e}: データの保管に失敗しました")
+      false
     end
 
     # 登録可能かどうかを検査する
@@ -42,7 +47,7 @@ module Reins
       addr = IPAddr.new(ipaddr).native.to_s
       @hosts.key?(addr) ? false : addr
     rescue => e
-      Reins.logger.error("#{e}: #{ipaddr} は登録可能なIPアドレスではありません.")
+      Reins.logger.error("#{e}: #{ipaddr} は登録可能なIPアドレスではありません")
       false
     end
 
@@ -60,7 +65,7 @@ module Reins
         @hosts[addr]["created_date"] = @hosts[addr]["updated_date"] = Time.now.getlocal
         @hosts[addr]["status"]       = "alive"
         Reins.logger.info("#{addr} を追加しました")
-        store
+        key if store
       else
         false
       end
@@ -74,7 +79,7 @@ module Reins
     # == 返り値
     # "alive" or "dead"::  変更したホストのステータス
     # false:: 未登録ホストの場合、または Keyがまちがっている
-    def get_status(ipaddr, key)
+    def status(ipaddr, key)
       @hosts[ipaddr]["keycode"] == key ? @hosts[ipaddr]["status"] : false
     rescue
       false
@@ -89,7 +94,10 @@ module Reins
     # false:: 未登録、または停止中、または Keyがまちがっている
     def set_status(ipaddr, key, status)
       if @hosts[ipaddr]["keycode"] == key
-        @hosts[ipaddr]["status"] = status
+        @hosts[ipaddr]["status"]     = status
+        @hosts[addr]["updated_date"] = Time.now.getlocal
+        store
+        status
       else
         false
       end
@@ -120,12 +128,12 @@ module Reins
     # string:: 削除された要素
     # nil::    削除すべき要素が見つからなかったとき
     def delete(addr)
-      if (@hosts.delete(addr))
+      if @hosts.delete(addr)
         Reins.logger.info("#{addr} を削除しました.")
         store
         addr
       else
-        Reins.logger.warn("#{addr} が見つかりません.")
+        Reins.logger.warn("#{addr} を削除できません.")
         nil
       end
     end

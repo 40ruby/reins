@@ -65,8 +65,8 @@ RSpec.describe Reins do
       it { is_expected.to eq(false) }
     end
 
-    describe '#get_status' do
-      subject { regist_test.get_status(localhost, test_key) }
+    describe '#status' do
+      subject { regist_test.status(localhost, test_key) }
       before do
         regist_test.create(localhost, test_key)
       end
@@ -74,7 +74,7 @@ RSpec.describe Reins do
         it { is_expected.to eq("alive") }
       end
       context 'ステータスを"alive"へ変更した場合' do
-        it '#set_status で "alive" をセット' do
+        it '#status= で "alive" をセット' do
           regist_test.set_status(localhost, test_key, "alive")
           is_expected.to eq("alive")
         end
@@ -87,11 +87,11 @@ RSpec.describe Reins do
       end
       context '未登録のホストの場合' do
         it '登録していないホストのステータスを確認するとfalse' do
-          expect(regist_test.get_status("192.168.0.10", test_key)).to eq(false)
+          expect(regist_test.status("192.168.0.10", test_key)).to eq(false)
         end
         it '未登録のホストステータスを変更するとfalse' do
           expect(regist_test.set_status("192.168.0.10", test_key, "alive")).to eq(false)
-          expect(regist_test.get_status("192.168.0.10", test_key)).to eq(false)
+          expect(regist_test.status("192.168.0.10", test_key)).to eq(false)
         end
       end
     end
@@ -143,6 +143,7 @@ RSpec.describe Reins do
     before { @server = TCPServer.new(24_368) }
     after  { @server.close }
     let(:tasks) { Reins::TaskControl.new }
+    let(:no_task) { Reins::TaskControl.new('localhost', 65_000) }
 
     describe '#connect' do
       context 'クライアントへ接続できる場合' do
@@ -154,10 +155,7 @@ RSpec.describe Reins do
       end
 
       context 'クライアントへ接続できない場合' do
-        it '接続先が存在しないと Standard Error' do
-          # TODO: 実際は Raise ではなく、成否を True/False でもらうこととする
-          expect { Reins::TaskControl.new('localhost', 65_000) }.to raise_error 'Not Connect'
-        end
+        it { expect(no_task.connect).to eq(false) }
         it 'クライアントが停止していたら false' do
           allow(tasks).to receive(:connect).and_return(false)
           expect(tasks.connect).to eq(false)
@@ -179,6 +177,8 @@ RSpec.describe Reins do
   describe 'Dispatch' do
     let(:test_key)       { "TestKey" }
     let(:correct_host)   { Reins::Dispatch.new("192.168.0.10", test_key) }
+
+    before { allow(correct_host).to receive(:varidate).and_return(true) }
 
     describe '#command' do
       context 'ホスト一覧を出力する場合' do

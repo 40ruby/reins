@@ -5,7 +5,7 @@ require 'logger'
 
 module Reins
   class << self
-    attr_accessor :logger, :auth_service, :regist_host, :port
+    attr_accessor :logger, :client_port, :auth_service, :regist_host, :port
 
     def configure
       yield self

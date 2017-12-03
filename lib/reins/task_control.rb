@@ -10,9 +10,12 @@ module Reins
     # == 返り値
     # 接続された通信用のソケットオブジェクト
     def initialize(hostname = '127.0.0.1', port = 24_368)
-      @s = TCPSocket.open(hostname, port)
+      @s       = TCPSocket.open(hostname, port)
+      @addr    = hostname
+      @keycode = Reins.regist_host.read_hostkeys[@addr]
     rescue => e
-      notify(e)
+      Reins.logger.error("#{e}: クライアントへの接続でエラーが発生しました")
+      false
     end
 
     # クライアントとの死活確認
@@ -22,14 +25,13 @@ module Reins
     # true:: 生存確認
     # false:: クライアントが停止、またはネットワーク上に問題あり
     def connect
-      true
+      message = JSON.generate("keycode" => keycode.to_s, "command" => "watch")
+      @s.puts(message)
+      Reins.regist_host.set_status(@addr, @keycode, "dead") unless @s.gets == "OK"
     rescue => e
-      notify(e)
-    end
-
-    # エラーが発生した場合に一時的に飛ばされてくるメソッド
-    def notify(_error)
-      raise(StandardError, 'Not Connect')
+      Reins.logger.error("#{e}: クライアントへの接続でエラーが発生しました")
+      Reins.regist_host.set_status(@addr, @keycode, "dead")
+      false
     end
 
     # クライアントとの接続を切断
