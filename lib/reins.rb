@@ -9,6 +9,7 @@ require "reins/host_registry"
 require "reins/task_control"
 require "reins/config"
 
+require "json"
 require "socket"
 require "ipaddr"
 

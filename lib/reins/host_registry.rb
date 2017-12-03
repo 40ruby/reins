@@ -16,7 +16,7 @@ module Reins
     def initialize(filename)
       @filename = filename
       File.open(@filename) do |file|
-        @hosts = JSON.load(file)
+        @hosts = JSON.parse(file)
       end
     rescue
       @hosts = {}
@@ -40,7 +40,7 @@ module Reins
     # false:: 登録不可
     def varid_ip?(ipaddr)
       addr = IPAddr.new(ipaddr).native.to_s
-      @hosts.has_key?(addr) ? false : addr
+      @hosts.key?(addr) ? false : addr
     rescue => e
       Reins.logger.error("#{e}: #{ipaddr} は登録可能なIPアドレスではありません.")
       false
@@ -57,15 +57,44 @@ module Reins
       if (addr = varid_ip?(ipaddr))
         @hosts[addr] = {}
         @hosts[addr]["keycode"]      = key
-        @hosts[addr]["created_date"] = Time.now.getlocal
-        @hosts[addr]["updated_date"] = Time.now.getlocal
+        @hosts[addr]["created_date"] = @hosts[addr]["updated_date"] = Time.now.getlocal
         @hosts[addr]["status"]       = "alive"
         Reins.logger.info("#{addr} を追加しました")
         store
-        true
       else
         false
       end
+    end
+
+    # 登録されたステータスを変更する
+    # == パラメータ
+    # ipaddr:: 登録済みIPアドレス
+    # key:: 登録する IPアドレスをキーにした、接続用Keyをもつハッシュデータ
+    # status:: "alive" 稼働中, "dead" 異常発生し停止
+    # == 返り値
+    # "alive" or "dead"::  変更したホストのステータス
+    # false:: 未登録ホストの場合、または Keyがまちがっている
+    def get_status(ipaddr, key)
+      @hosts[ipaddr]["keycode"] == key ? @hosts[ipaddr]["status"] : false
+    rescue
+      false
+    end
+
+    # 登録されたステータス情報を得る
+    # == パラメータ
+    # ipaddr:: 登録済みIPアドレス
+    # key:: 登録する IPアドレスをキーにした、接続用Keyをもつハッシュデータ
+    # == 返り値
+    # "alive" or "dead"::  登録されているホストのステータス
+    # false:: 未登録、または停止中、または Keyがまちがっている
+    def set_status(ipaddr, key, status)
+      if @hosts[ipaddr]["keycode"] == key
+        @hosts[ipaddr]["status"] = status
+      else
+        false
+      end
+    rescue
+      false
     end
 
     # 登録済みホスト一覧を、IPアドレスをKey、接続KeyをValueとするハッシュで返す

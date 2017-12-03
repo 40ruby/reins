@@ -65,6 +65,37 @@ RSpec.describe Reins do
       it { is_expected.to eq(false) }
     end
 
+    describe '#get_status' do
+      subject { regist_test.get_status(localhost, test_key) }
+      before do
+        regist_test.create(localhost, test_key)
+      end
+      context '登録直後の場合' do
+        it { is_expected.to eq("alive") }
+      end
+      context 'ステータスを"alive"へ変更した場合' do
+        it '#set_status で "alive" をセット' do
+          regist_test.set_status(localhost, test_key, "alive")
+          is_expected.to eq("alive")
+        end
+      end
+      context 'ステータスが"dead"の場合' do
+        it '#set_status で "dead" をセット' do
+          regist_test.set_status(localhost, test_key, "dead")
+          is_expected.to eq("dead")
+        end
+      end
+      context '未登録のホストの場合' do
+        it '登録していないホストのステータスを確認するとfalse' do
+          expect(regist_test.get_status("192.168.0.10", test_key)).to eq(false)
+        end
+        it '未登録のホストステータスを変更するとfalse' do
+          expect(regist_test.set_status("192.168.0.10", test_key, "alive")).to eq(false)
+          expect(regist_test.get_status("192.168.0.10", test_key)).to eq(false)
+        end
+      end
+    end
+
     describe '#read_hosts' do
       subject { regist_test.read_hosts }
       context '正常に登録されている場合' do
@@ -150,12 +181,6 @@ RSpec.describe Reins do
     let(:correct_host)   { Reins::Dispatch.new("192.168.0.10", test_key) }
 
     describe '#command' do
-      context 'ホストを追加する場合' do
-        it 'ホストを正常に登録' do
-          allow(Reins.regist_host).to receive(:create).and_return(true)
-          expect(correct_host.command("add", "")).to eq(true)
-        end
-      end
       context 'ホスト一覧を出力する場合' do
         it 'ホスト一覧が出力された' do
           allow(Reins.regist_host).to receive(:read_hosts).and_return([])

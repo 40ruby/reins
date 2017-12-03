@@ -23,8 +23,8 @@ module Reins
     def command(comm, value)
       Reins.logger.debug("#{comm}(#{value}) : 指定のコマンドへディスパッチします")
       case comm
-      when /^add/
-        Reins.regist_host.create(@ip_address, @key)
+#      when /^add/
+#        Reins.regist_host.create(@ip_address, @key)
       when /^list/
         Reins.regist_host.read_hosts
       when /^delete/
