@@ -59,11 +59,7 @@ module Reins
     def run_auth
       Reins.logger.debug("#{@addr} : 認証を行います")
       if (key = Reins.auth_service.authenticate_key(@keycode, @addr))
-        if key == true
-          Reins.regist_host.read_hostkeys[@addr]
-        else
-          Reins.regist_host.create(@addr, key) ? key : "false"
-        end
+        key
       else
         "false"
       end

@@ -1,7 +1,6 @@
 # coding: utf-8
-
 # filename: host_registry.rb
-require 'csv'
+require 'json'
 require 'ipaddr'
 
 module Reins
@@ -16,7 +15,11 @@ module Reins
     # 特になし。但し、@hosts インスタンス変数へ、データベースの内容を保持
     def initialize(filename)
       @filename = filename
-      @hosts    = File.exist?(@filename) ? CSV.read(@filename) : []
+      File.open(@filename) do |file|
+        @hosts = JSON.load(file)
+      end
+    rescue
+      @hosts = {}
     end
 
     # メモリ上のアドレスリストを、ファイルへ保管する
@@ -24,11 +27,8 @@ module Reins
     # filename:: 保管先ファイル名。指定がない場合は、初期化時に採用したファイル名
     def store(filename = @filename)
       Reins.logger.debug("#{filename} : ホスト一覧を保存します")
-      CSV.open(filename, "w") do |csv|
-        @hosts.each do |addr|
-          Reins.logger.debug("保管中... > #{addr}")
-          csv << addr
-        end
+      File.open(filename, "w") do |file|
+        JSON.dump(@hosts, file)
       end
     end
 
@@ -40,7 +40,7 @@ module Reins
     # false:: 登録不可
     def varid_ip?(ipaddr)
       addr = IPAddr.new(ipaddr).native.to_s
-      read_hosts.include?(addr) ? false : addr
+      @hosts.has_key?(addr) ? false : addr
     rescue => e
       Reins.logger.error("#{e}: #{ipaddr} は登録可能なIPアドレスではありません.")
       false
@@ -55,7 +55,11 @@ module Reins
     # false:: 既に同じアドレスまたはIPアドレスではないため、登録せず
     def create(ipaddr, key)
       if (addr = varid_ip?(ipaddr))
-        @hosts << [addr, key, Time.now.getlocal]
+        @hosts[addr] = {}
+        @hosts[addr]["keycode"]      = key
+        @hosts[addr]["created_date"] = Time.now.getlocal
+        @hosts[addr]["updated_date"] = Time.now.getlocal
+        @hosts[addr]["status"]       = "alive"
         Reins.logger.info("#{addr} を追加しました")
         store
         true
@@ -68,14 +72,16 @@ module Reins
     # == 返り値
     # hash: hash[ipアドレス] = key を一つの要素とする
     def read_hostkeys
-      @hosts.each.map { |addr, key| [addr, key] }.to_h
+      @hosts.each_key.map do |host|
+        [host, @hosts[host]["keycode"]]
+      end.to_h
     end
 
     # 登録済みホスト一覧を配列で返す
     # == 返り値
     # array: 登録済みのIPアドレス一覧
     def read_hosts
-      read_hostkeys.keys
+      @hosts.each_key.map { |host| host }
     end
 
     # 登録済みのアドレスを削除する
@@ -85,8 +91,7 @@ module Reins
     # string:: 削除された要素
     # nil::    削除すべき要素が見つからなかったとき
     def delete(addr)
-      if (i = read_hosts.index(addr))
-        @hosts.delete_at(i)
+      if (@hosts.delete(addr))
         Reins.logger.info("#{addr} を削除しました.")
         store
         addr

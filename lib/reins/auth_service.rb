@@ -1,5 +1,4 @@
 # coding: utf-8
-
 require 'digest/sha2'
 
 module Reins
@@ -35,7 +34,12 @@ module Reins
     def authenticate_key(key, ipaddr)
       if @secret_key == Digest::SHA512.hexdigest(key)
         Reins.logger.info("#{ipaddr} : 認証が成功しました")
-        Reins.regist_host.read_hosts.include?(ipaddr) ? true : create_key(ipaddr)
+        if Reins.regist_host.read_hosts.include?(ipaddr)
+          Reins.regist_host.read_hostkeys[ipaddr]
+        else
+          keycode = create_key(ipaddr)
+          Reins.regist_host.create(ipaddr, keycode) ? keycode : false
+        end
       else
         Reins.logger.fatal("#{ipaddr} : 認証が失敗しました")
         false
