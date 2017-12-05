@@ -58,26 +58,15 @@ module Reins
   end
 
   class Clients
+    attr_accessor :addr, :keycode, :command, :options
+
     def initialize(client)
       @message = JSON.parse(client.gets)
       Reins.logger.debug(@message)
-      @message["IP address"] = IPAddr.new(client.peeraddr[3]).native.to_s
-    end
-
-    def addr
-      @message["IP address"]
-    end
-
-    def keycode
-      @message["keycode"]
-    end
-
-    def command
-      @message["command"]
-    end
-
-    def options
-      @message["options"]
+      @addr    = IPAddr.new(client.peeraddr[3]).native.to_s
+      @keycode = @message["keycode"]
+      @command = @message["command"]
+      @options = @message["options"]
     end
 
     # 認証処理を行う
