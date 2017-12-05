@@ -79,7 +79,7 @@ module Reins
     # == 返り値
     # "alive" or "dead"::  変更したホストのステータス
     # false:: 未登録ホストの場合、または Keyがまちがっている
-    def status(ipaddr, key)
+    def get_status(ipaddr, key)
       @hosts[ipaddr]["keycode"] == key ? @hosts[ipaddr]["status"] : false
     rescue
       false
@@ -94,8 +94,8 @@ module Reins
     # false:: 未登録、または停止中、または Keyがまちがっている
     def set_status(ipaddr, key, status)
       if @hosts[ipaddr]["keycode"] == key
-        @hosts[ipaddr]["status"]     = status
-        @hosts[addr]["updated_date"] = Time.now.getlocal
+        @hosts[ipaddr]["status"]       = status
+        @hosts[ipaddr]["updated_date"] = Time.now.getlocal
         store
         status
       else

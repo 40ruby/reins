@@ -58,7 +58,7 @@ module Reins
   end
 
   class Clients
-    attr_accessor :addr, :keycode, :command, :options
+    attr_reader :addr, :keycode, :command, :options
 
     def initialize(client)
       @message = JSON.parse(client.gets)

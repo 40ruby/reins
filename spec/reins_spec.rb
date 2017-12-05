@@ -65,8 +65,8 @@ RSpec.describe Reins do
       it { is_expected.to eq(false) }
     end
 
-    describe '#status' do
-      subject { regist_test.status(localhost, test_key) }
+    describe '#get_status' do
+      subject { regist_test.get_status(localhost, test_key) }
       before do
         regist_test.create(localhost, test_key)
       end
@@ -74,7 +74,7 @@ RSpec.describe Reins do
         it { is_expected.to eq("alive") }
       end
       context 'ステータスを"alive"へ変更した場合' do
-        it '#status= で "alive" をセット' do
+        it '#set_status で "alive" をセット' do
           regist_test.set_status(localhost, test_key, "alive")
           is_expected.to eq("alive")
         end
@@ -87,11 +87,11 @@ RSpec.describe Reins do
       end
       context '未登録のホストの場合' do
         it '登録していないホストのステータスを確認するとfalse' do
-          expect(regist_test.status("192.168.0.10", test_key)).to eq(false)
+          expect(regist_test.get_status("192.168.0.10", test_key)).to eq(false)
         end
         it '未登録のホストステータスを変更するとfalse' do
           expect(regist_test.set_status("192.168.0.10", test_key, "alive")).to eq(false)
-          expect(regist_test.status("192.168.0.10", test_key)).to eq(false)
+          expect(regist_test.get_status("192.168.0.10", test_key)).to eq(false)
         end
       end
     end
