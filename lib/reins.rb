@@ -12,6 +12,7 @@ require "reins/config"
 require "json"
 require "socket"
 require "ipaddr"
+require 'thwait'
 
 module Reins
   class << self
@@ -70,6 +71,23 @@ module Reins
         c.close
       end
     end
+
+    # クライアントとの定義されたタスクを5秒間隔で実行するよう制御
+    # == パラメータ
+    # 特になし
+    # == 返り値
+    # 特になし
+    def check_client
+      threads = []
+        Reins.regist_host.read_hosts.each do |host|
+          threads << Thread.new do
+            task = TaskControl.new(host)
+            task.check_agent
+          end
+        end
+      ThreadsWait.all_waits(*threads)
+      sleep 5
+    end
   end
 
   class Clients
@@ -113,6 +131,8 @@ module Reins
   def start
     server = run_server(Reins.port)
     clients_thread = threaded {connect_client(server)}
+    tasks_thread   = threaded {check_client}
+    tasks_thread.join
     clients_thread.join
   rescue Interrupt
     exit_server(server)
