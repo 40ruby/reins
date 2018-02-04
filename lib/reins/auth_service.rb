@@ -14,13 +14,14 @@ module Reins
       nil
     end
 
-    # IPアドレスをキーにした専用のキーを発行する
+    # IPアドレスをキーにした専用のキーを発行し、新しいキーを登録する
     # == パラメータ
     # ipaddr:: IPアドレス
     # == 返り値
     # キー:: ハッシュ化された識別キー
     def create_key(ipaddr)
-      Digest::SHA512.hexdigest("#{ipaddr}:#{Random.new_seed}")
+      new_key = Digest::SHA512.hexdigest("#{ipaddr}:#{Random.new_seed}")
+      Reins.regist_host.create(ipaddr, new_key)
     end
 
     # クライアント認証を行う
@@ -35,7 +36,7 @@ module Reins
     def authenticate_key(key, ipaddr)
       if @secret_key == Digest::SHA512.hexdigest(key)
         Reins.logger.info("#{ipaddr} : 認証が成功しました")
-        Reins.regist_host.read_hosts.include?(ipaddr) ? true : create_key(ipaddr)
+        Reins.regist_host.read_hosts.include?(ipaddr) ? Reins.regist_host.read_hostkeys[ipaddr] : create_key(ipaddr)
       else
         Reins.logger.fatal("#{ipaddr} : 認証が失敗しました")
         false

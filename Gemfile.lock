@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    reins (0.2.0)
+    reins (0.2.2)
 
 GEM
   remote: https://rubygems.org/

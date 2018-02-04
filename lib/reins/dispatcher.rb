@@ -8,9 +8,16 @@ module Reins
     # ip:: 対象となるクライアントのIPアドレス
     # == 返り値
     # 特になし
-    def initialize(ip, key)
-      @ip_address = ip
-      @keycode    = key
+    def initialize(addr, keycode)
+      @addr    = addr
+      @keycode = keycode
+    end
+
+    def varidate
+      return true if Reins.regist_host.read_hostkeys[@addr] == @keycode
+
+      Reins.logger.error("認可されていないコマンドです")
+      false
     end
 
     # コマンドを受け取って、対象の機能へ振り分ける
@@ -22,13 +29,12 @@ module Reins
     # exception以外:: コマンドの実行結果
     def command(comm, value)
       Reins.logger.debug("#{comm}(#{value}) : 指定のコマンドへディスパッチします")
+      return "false" unless varidate
       case comm
-      when /^add/
-        Reins.regist_host.create(@ip_address, @key)
       when /^list/
         Reins.regist_host.read_hosts
       when /^delete/
-        Reins.regist_host.delete(@ip_address)
+        Reins.regist_host.delete(@addr)
       end
     end
   end

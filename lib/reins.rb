@@ -9,8 +9,10 @@ require "reins/host_registry"
 require "reins/task_control"
 require "reins/config"
 
+require "json"
 require "socket"
 require "ipaddr"
+require 'thwait'
 
 module Reins
   class << self
@@ -40,14 +42,64 @@ module Reins
       server.close
       exit
     end
+
+    # ブロックとして定義されたコードをスレッド化して実行する
+    # == パラメータ
+    # ブロック:: スレッドとして実行したいコード
+    # == 返り値
+    # Thread:: 生成されたスレッド
+    def threaded
+      Thread.new do
+        loop do
+          yield
+        end
+      end
+    end
+
+    # クライアントからの接続を待ち受ける
+    # == パラメータ
+    # TCPSocket:: Socket オブジェクト
+    # == 返り値
+    # Thread:: 生成されたスレッド
+    def connect_client(server)
+      Thread.start(server.accept) do |c|
+        client = Reins::Clients.new(c)
+        status = {}
+        status["keycode"] = client.keycode
+        status["result"]  = client.command == 'auth' ? client.run_auth : client.run_command
+        c.puts JSON.pretty_generate(status)
+        c.close
+      end
+    end
+
+    # クライアントとの定義されたタスクを5秒間隔で実行するよう制御
+    # == パラメータ
+    # 特になし
+    # == 返り値
+    # 特になし
+    def check_client
+      threads = []
+        Reins.regist_host.read_hosts.each do |host|
+          threads << Thread.new do
+            task = TaskControl.new(host)
+            task.check_agent
+          end
+        end
+      ThreadsWait.all_waits(*threads)
+      sleep 5
+    end
   end
 
   class Clients
-    attr_reader :command
+    attr_reader :addr, :keycode, :command, :options
+
     def initialize(client)
-      @keycode, @command, @options = client.gets.chomp.split
-      @addr = IPAddr.new(client.peeraddr[3]).native.to_s
-      Reins.logger.debug("addr = #{@addr}, keycode = #{@keycode}, command = #{@command}, options = #{@options}")
+      @message = JSON.parse(client.gets)
+      Reins.logger.debug(@message)
+      @addr    = IPAddr.new(client.peeraddr[3]).native.to_s
+      @keycode = @message["keycode"]
+      @command = @message["command"]
+      @options = @message["options"]
     end
 
     # 認証処理を行う
@@ -57,13 +109,9 @@ module Reins
     # key:: 認証が成功した場合は接続用の認証キーを返す
     # false:: 認証が失敗した時は "false" 文字列を返す
     def run_auth
-      Reins.logger.debug("#{@addr} : 認証を行います")
-      if (key = Reins.auth_service.authenticate_key(@keycode, @addr))
-        if key == true
-          Reins.regist_host.read_hostkeys[@addr]
-        else
-          Reins.regist_host.create(@addr, key) ? key : "false"
-        end
+      Reins.logger.debug("#{addr} : 認証を行います")
+      if (key = Reins.auth_service.authenticate_key(keycode, addr))
+        key
       else
         "false"
       end
@@ -76,28 +124,18 @@ module Reins
     # false:: 実行できなければ "false" 文字列を返す
     # false以外:: 実行された結果を、改行を含む文字列で返す
     def run_command
-      if Reins.auth_service.varid?(@keycode) == @addr
-        Reins::Dispatch.new(@addr, @keycode).command(@command, @options)
-      else
-        "false"
-      end
+      Reins::Dispatch.new(addr, keycode).command(command, options)
     end
   end
 
   def start
     server = run_server(Reins.port)
-
-    loop do
-      begin
-        Thread.start(server.accept) do |c|
-          client = Reins::Clients.new(c)
-          c.puts client.command == 'auth' ? client.run_auth : client.run_command
-          c.close
-        end
-      rescue Interrupt
-        exit_server(server)
-      end
-    end
+    clients_thread = threaded {connect_client(server)}
+    tasks_thread   = threaded {check_client}
+    tasks_thread.join
+    clients_thread.join
+  rescue Interrupt
+    exit_server(server)
   end
 
   module_function :start
