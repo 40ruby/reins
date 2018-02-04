@@ -42,7 +42,24 @@ module Reins
       exit
     end
 
-    #
+    # ブロックとして定義されたコードをスレッド化して実行する
+    # == パラメータ
+    # ブロック:: スレッドとして実行したいコード
+    # == 返り値
+    # Thread:: 生成されたスレッド
+    def threaded
+      Thread.new do
+        loop do
+          yield
+        end
+      end
+    end
+
+    # クライアントからの接続を待ち受ける
+    # == パラメータ
+    # TCPSocket:: Socket オブジェクト
+    # == 返り値
+    # Thread:: 生成されたスレッド
     def connect_client(server)
       Thread.start(server.accept) do |c|
         client = Reins::Clients.new(c)
@@ -52,8 +69,6 @@ module Reins
         c.puts JSON.pretty_generate(status)
         c.close
       end
-    rescue Interrupt
-      exit_server(server)
     end
   end
 
@@ -97,10 +112,10 @@ module Reins
 
   def start
     server = run_server(Reins.port)
-
-    loop do
-      connect_client(server)
-    end
+    clients_thread = threaded {connect_client(server)}
+    clients_thread.join
+  rescue Interrupt
+    exit_server(server)
   end
 
   module_function :start
