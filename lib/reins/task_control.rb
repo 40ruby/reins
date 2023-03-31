@@ -7,7 +7,7 @@ module Reins
     # port:: 接続先クライアントのTCPポート番号。通常は 24368
     # == 返り値
     # 特になし
-    def initialize(hostname = '127.0.0.1', port = 24_368)
+    def initialize(hostname = '127.0.0.1', port = 24368)
       @addr    = hostname
       @port    = port
       @keycode = Reins.regist_host.read_hostkeys[@addr]
@@ -19,10 +19,12 @@ module Reins
     # == 返り値
     # TCPScoket:: TCPのソケット情報
     def connection
-      TCPSocket.open(@addr, @port)
-    rescue => e
-      Reins.logger.error("#{e}: クライアントへの接続でエラーが発生しました")
-      dead
+      begin
+        TCPSocket.open(@addr, @port)
+      rescue => e
+        Reins.logger.error("#{e}: クライアントへの接続でエラーが発生しました")
+        dead
+      end
     end
 
     # クライアントとの死活確認
@@ -34,6 +36,7 @@ module Reins
     def viability(s)
       s.puts(JSON.generate("keycode" => @keycode.to_s, "command" => "watch"))
       raise unless s.gets.chomp == "OK"
+      disconnect(s)
       alive
     rescue => e
       Reins.logger.error("#{e}: クライアントへの接続でエラーが発生しました")
@@ -75,8 +78,8 @@ module Reins
     # 特になし
     # == 返り値
     # nil:: 正常に切断
-    def disconnect
-      @s.close
+    def disconnect(s)
+      s.close
     end
   end
 end

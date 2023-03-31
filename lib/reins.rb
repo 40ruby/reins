@@ -12,7 +12,7 @@ require "reins/config"
 require "json"
 require "socket"
 require "ipaddr"
-require 'thwait'
+# require 'thwait'
 
 module Reins
   class << self

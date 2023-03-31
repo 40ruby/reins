@@ -147,27 +147,28 @@ RSpec.describe Reins do
 
     describe '#connect' do
       context 'クライアントへ接続できる場合' do
-        subject { tasks.connect }
+        subject { tasks.connection }
         it 'モックを使って正常接続のコール' do
-          allow(tasks).to receive(:connect).and_return(true)
+          allow(tasks).to receive(:connection).and_return(true)
           is_expected.to eq(true)
         end
       end
 
-      context 'クライアントへ接続できない場合' do
-        it { expect(no_task.connect).to eq(false) }
-        it 'クライアントが停止していたら false' do
-          allow(tasks).to receive(:connect).and_return(false)
-          expect(tasks.connect).to eq(false)
+      describe '#disconnect' do
+        context '正常に切断できた場合' do
+          subject { tasks.disconnect }
+          it 'こちらから、クライアントとの接続を切断して、成功すると nil' do
+            is_expected.to eq(nil)
+          end
         end
-      end
-    end
+      end      
 
-    describe '#disconnect' do
-      context '正常に切断できた場合' do
-        subject { tasks.disconnect }
-        it 'こちらから、クライアントとの接続を切断して、成功すると nil' do
-          is_expected.to eq(nil)
+      context 'クライアントへ接続できない場合' do
+        it { expect(no_task.connection).to eq(false) }
+        subject { no_task.connection }
+        it 'クライアントが停止していたら false' do
+          allow(no_task).to receive(:connection).and_return(false)
+          is_expected.to eq(false)
         end
       end
     end
