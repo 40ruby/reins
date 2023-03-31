@@ -8,8 +8,8 @@ module Reins
     # == 返り値
     # 特になし
     def initialize(hostname = '127.0.0.1', port = 24368)
-      @addr    = hostname
-      @port    = port
+      @addr = hostname
+      @port = port
       @keycode = Reins.regist_host.read_hostkeys[@addr]
     end
 
@@ -20,7 +20,7 @@ module Reins
     # TCPScoket:: TCPのソケット情報
     def connection
       begin
-        TCPSocket.open(@addr, @port)
+        @s = TCPSocket.open(@addr, @port)
       rescue => e
         Reins.logger.error("#{e}: クライアントへの接続でエラーが発生しました")
         dead
@@ -33,14 +33,16 @@ module Reins
     # == 返り値
     # true:: 生存確認
     # false:: クライアントが停止、またはネットワーク上に問題あり
-    def viability(s)
-      s.puts(JSON.generate("keycode" => @keycode.to_s, "command" => "watch"))
-      raise unless s.gets.chomp == "OK"
-      disconnect(s)
+    def viability
+      connection
+      @s.puts(JSON.generate("keycode" => @keycode.to_s, "command" => "watch"))
+      raise unless @s.gets.chomp == "OK"
       alive
     rescue => e
       Reins.logger.error("#{e}: クライアントへの接続でエラーが発生しました")
       dead
+    ensure
+      disconnect
     end
 
     # ステータスコードを「alive」に変更
@@ -50,7 +52,9 @@ module Reins
     # true:: ステータスの変更に成功
     # false:: ステータスの変更に失敗
     def alive
-      Reins.regist_host.set_status(@addr, @keycode, "alive") if Reins.regist_host.get_status(@addr, @keycode) == "dead"
+      if Reins.regist_host.get_status(@addr, @keycode) == "dead"
+        Reins.regist_host.set_status(@addr, @keycode, "alive")
+      end
     end
 
     # ステータスコードを「dead」に変更
@@ -60,7 +64,9 @@ module Reins
     # true:: ステータスの変更に成功
     # false:: ステータスの変更に失敗
     def dead
-      Reins.regist_host.set_status(@addr, @keycode, "dead") if Reins.regist_host.get_status(@addr, @keycode) == "alive"
+      if Reins.regist_host.get_status(@addr, @keycode) == "alive"
+        Reins.regist_host.set_status(@addr, @keycode, "dead")
+      end
     end
 
     # クライアントエージェントとの応答確認
@@ -70,7 +76,7 @@ module Reins
     # 特になし
     def check_agent
       Reins.logger.debug("#{@addr} 宛にチェックを行います...")
-      viability(connection)
+      viability
     end
 
     # クライアントとの接続を切断
@@ -78,8 +84,8 @@ module Reins
     # 特になし
     # == 返り値
     # nil:: 正常に切断
-    def disconnect(s)
-      s.close
+    def disconnect
+      @s.close
     end
   end
 end

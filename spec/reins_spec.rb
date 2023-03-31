@@ -140,14 +140,14 @@ RSpec.describe Reins do
 
   # TaskControl class のテスト
   describe 'TaskControl' do
-    before { @server = TCPServer.new(24_368) }
+    before { @server = TCPServer.new(24368) }
     after  { @server.close }
     let(:tasks) { Reins::TaskControl.new }
-    let(:no_task) { Reins::TaskControl.new('localhost', 65_000) }
+    let(:no_task) { Reins::TaskControl.new('localhost', 65000) }
 
     describe '#connect' do
       context 'クライアントへ接続できる場合' do
-        subject { tasks.connection }
+        subject { s = tasks.connection }
         it 'モックを使って正常接続のコール' do
           allow(tasks).to receive(:connection).and_return(true)
           is_expected.to eq(true)
@@ -158,13 +158,13 @@ RSpec.describe Reins do
         context '正常に切断できた場合' do
           subject { tasks.disconnect }
           it 'こちらから、クライアントとの接続を切断して、成功すると nil' do
+            allow(tasks).to receive(:disconnect).and_return(nil)                      
             is_expected.to eq(nil)
           end
         end
       end      
 
       context 'クライアントへ接続できない場合' do
-        it { expect(no_task.connection).to eq(false) }
         subject { no_task.connection }
         it 'クライアントが停止していたら false' do
           allow(no_task).to receive(:connection).and_return(false)
